@@ -2,11 +2,13 @@ import os
 import noisereduce
 import soundfile
 import librosa
+from pydub import AudioSegment
 
+VOLUME_THRESHOLD = -20
 DROP_AUDIO_THRESHOLD = -10
 DATA_SUM_THRESHOLD  = -3
 NOISE_REDUCETION_ROUND = 4
-DATA_STREET = './recordings/'
+DATA_STREET = './data/'
 
 DataFileNames = os.listdir(DATA_STREET)
 
@@ -42,11 +44,31 @@ def noiseFilterKon(dataFileNames):
 def eliminateFiles(eliminationList, dataFileNames):
     for el in eliminationList:
         dataFileNames.remove(el)
-    
+
     return dataFileNames
 
-#print(len(DataFileNames))
+def volumZiadKon(fileName, currentVolume):
+    audio = AudioSegment.from_file(fileName)
+    modifiedAudio = audio + (VOLUME_THRESHOLD - currentVolume)
+    modifiedAudio.export(fileName, format="wav")
+
+def getVolumValue(fileName):
+    audio = AudioSegment.from_file(fileName)
+    volume = audio.dBFS
+
+    print(fileName, volume)
+    return volume
+
+def standardizeVolumes(dataFileNames):
+    for fileName in dataFileNames:
+        fileName = DATA_STREET + fileName
+        volume = getVolumValue(fileName)
+        if volume < VOLUME_THRESHOLD:
+            volumZiadKon(fileName, volume)
+
+print(len(DataFileNames))
 eliminationList = noiseFilterKon(DataFileNames)
-#print(eliminationList)
-eliminateFiles(eliminationList, DataFileNames)
-#print(len(DataFileNames))
+DataFileNames = eliminateFiles(eliminationList, DataFileNames)
+print(len(DataFileNames))
+
+standardizeVolumes(DataFileNames)

@@ -10,6 +10,15 @@ DATA_SUM_THRESHOLD  = -3
 NOISE_REDUCETION_ROUND = 4
 DATA_STREET = './recordings/'
 
+DICT_NUM_KEY = "number"
+DICT_NAME_KEY = "fileName"
+DICT_MFCC_KEY = "mfcc"
+DICT_ZCR_KEY = "zcr"
+DICT_MELSPECT_KEY = "melspectogram"
+DICT_CHROMACENE_KEY = "chromaCene"
+DICT_CHROMACQT_KEY = "chromaCqt"
+DICT_CHROMASTFT_KEY = "chromaStft"
+
 DataFileNames = os.listdir(DATA_STREET)
 
 def noiseKamKon(fileName):
@@ -64,47 +73,59 @@ def standardizeVolumes(dataFileNames):
         if volume < VOLUME_THRESHOLD:
             volumZiadKon(fileName, volume)
 
-def extractMFCCs(datafileNames):
-    for fileName in datafileNames:
-        fileName = DATA_STREET + fileName
-        audioData, sampleRate = librosa.load(fileName)
+def extractMFCCs(fileDictionary):
+    for item in fileDictionary:
+        file = DATA_STREET + item.get(DICT_NAME_KEY)
+        audioData, sampleRate = librosa.load(file)
         mfccs = librosa.feature.mfcc(y=audioData, sr=sampleRate)
-        print(fileName, ": ",mfccs)
+        item[DICT_MFCC_KEY] = mfccs
 
-def extractZeroCrossingRates(datafileNames):
-    for fileName in datafileNames:
-        fileName = DATA_STREET + fileName
+    return fileDictionary
+
+def extractZeroCrossingRates(fileDictionary):
+    for item in fileDictionary:
+        fileName = DATA_STREET + item.get(DICT_NAME_KEY)
         audioData, _ = librosa.load(fileName)
         zcr = librosa.feature.zero_crossing_rate(y=audioData)
-        print(fileName, ": ",zcr)
+        item[DICT_ZCR_KEY] = zcr
 
-def extractMelSpectrogram(datafileNames):
-    for fileName in datafileNames:
-        fileName = DATA_STREET + fileName
+    return fileDictionary
+
+def extractMelSpectrogram(fileDictionary):
+    for item in fileDictionary:
+        fileName = DATA_STREET + item.get(DICT_NAME_KEY)
         audioData, sampleRate = librosa.load(fileName)
         melSpectrogram = librosa.feature.melspectrogram(y=audioData, sr=sampleRate)
-        print(fileName, ": ",melSpectrogram)
+        item[DICT_MELSPECT_KEY] = melSpectrogram
 
-def extractChromaCene(datafileNames):
-    for fileName in datafileNames:
-        fileName = DATA_STREET + fileName
+    return fileDictionary
+
+def extractChromaCene(fileDictionary):
+    for item in fileDictionary:
+        fileName = DATA_STREET + item.get(DICT_NAME_KEY)
         audioData, sampleRate = librosa.load(fileName)
         chromaCene = librosa.feature.chroma_cens(y=audioData, sr=sampleRate)
-        print(fileName, ": ",chromaCene)
+        item[DICT_CHROMACENE_KEY] = chromaCene
 
-def extractChromaCqt(datafileNames):
-    for fileName in datafileNames:
-        fileName = DATA_STREET + fileName
+    return fileDictionary
+
+def extractChromaCqt(fileDictionary):
+    for item in fileDictionary:
+        fileName = DATA_STREET + item.get(DICT_NAME_KEY)
         audioData, sampleRate = librosa.load(fileName)
         chromaCqt = librosa.feature.chroma_cqt(y=audioData, sr=sampleRate)
-        print(fileName, ": ",chromaCqt)
+        item[DICT_CHROMACQT_KEY] = chromaCqt
 
-def extractChromaStft(datafileNames):
-    for fileName in datafileNames:
-        fileName = DATA_STREET + fileName
+    return fileDictionary
+
+def extractChromaStft(fileDictionary):
+    for item in fileDictionary:
+        fileName = DATA_STREET + item.get(DICT_NAME_KEY)
         audioData, sampleRate = librosa.load(fileName)
         chromaStft = librosa.feature.chroma_stft(y=audioData, sr=sampleRate)
-        print(fileName, ": ",chromaStft)
+        item[DICT_CHROMASTFT_KEY] = chromaStft
+
+    return fileDictionary
 
 def extractChromaVqt(datafileNames):
     for fileName in datafileNames:
@@ -114,26 +135,27 @@ def extractChromaVqt(datafileNames):
         print(fileName, ": ",chromaVqt)
 
 def clusterAudioFiles(dataFileNames):
-    fileNumberGroupDictionary = {}
+    dictList = []
     for i in range(10):
-        label = str(i)
-        fileNumberGroupDictionary[label] = []
         for file in dataFileNames:
-            if file.startswith(label + "_"):
-                fileNumberGroupDictionary[label].append(os.path.join(file))
-    return fileNumberGroupDictionary
+            if file.startswith(str(i) + "_"):
+                fileNumberGroupDictionary = {}
+                fileNumberGroupDictionary[DICT_NUM_KEY] = str(i)
+                fileNumberGroupDictionary[DICT_NAME_KEY] = file
+                dictList.append(fileNumberGroupDictionary)
 
+    return dictList
 
 print(len(DataFileNames))
 standardizeVolumes(DataFileNames)
 eliminationList = noiseFilterKon(DataFileNames)
 DataFileNames = eliminateFiles(eliminationList, DataFileNames)
 print(len(DataFileNames))
-fileNumberGroupDictionary = {}
-fileNumberGroupDictionary = clusterAudioFiles(DataFileNames)
-#extractMFCCs(DataFileNames)
-#extractZeroCrossingRates(DataFileNames)
-#extractMelSpectrogram(DataFileNames)
-#extractChromaCene(DataFileNames)
-#extractChromaCqt(DataFileNames)
-#extractChromaStft(DataFileNames)
+fileDictionary = clusterAudioFiles(DataFileNames)
+fileDictionary = extractMFCCs(fileDictionary)
+fileDictionary = extractZeroCrossingRates(fileDictionary)
+fileDictionary = extractMelSpectrogram(fileDictionary)
+fileDictionary = extractChromaCene(fileDictionary)
+# fileDictionary = extractChromaCqt(fileDictionary)
+# fileDictionary = extractChromaStft(fileDictionary)
+print(fileDictionary.get(DICT_CHROMACENE_KEY))

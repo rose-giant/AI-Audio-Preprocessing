@@ -8,7 +8,7 @@ VOLUME_THRESHOLD = -20
 DROP_AUDIO_THRESHOLD = -10
 DATA_SUM_THRESHOLD  = -3
 NOISE_REDUCETION_ROUND = 4
-DATA_STREET = './data/'
+DATA_STREET = './recordings/'
 
 DataFileNames = os.listdir(DATA_STREET)
 
@@ -23,8 +23,6 @@ def noiseDetector(fileName):
     sum = 0
     for d in data:
         sum += d
-
-    #print("data sum of ", fileName, " is ", sum)
     return sum
 
 def noiseFilterKon(dataFileNames):
@@ -33,11 +31,11 @@ def noiseFilterKon(dataFileNames):
         dataSum = noiseDetector(DATA_STREET + fileName)
         if dataSum < DROP_AUDIO_THRESHOLD:
             eliminatedFiles.append(fileName)
-            print(fileName, " was dropped")
+            print(fileName, " dropped")
 
         elif dataSum < DATA_SUM_THRESHOLD:
             noiseKamKon(DATA_STREET + fileName)
-            print(fileName, " was denoised")
+            print(fileName, " reduced")
 
     return eliminatedFiles
 
@@ -56,7 +54,7 @@ def getVolumValue(fileName):
     audio = AudioSegment.from_file(fileName)
     volume = audio.dBFS
 
-    print(fileName, volume)
+    #print(fileName, volume)
     return volume
 
 def standardizeVolumes(dataFileNames):
@@ -66,9 +64,76 @@ def standardizeVolumes(dataFileNames):
         if volume < VOLUME_THRESHOLD:
             volumZiadKon(fileName, volume)
 
+def extractMFCCs(datafileNames):
+    for fileName in datafileNames:
+        fileName = DATA_STREET + fileName
+        audioData, sampleRate = librosa.load(fileName)
+        mfccs = librosa.feature.mfcc(y=audioData, sr=sampleRate)
+        print(fileName, ": ",mfccs)
+
+def extractZeroCrossingRates(datafileNames):
+    for fileName in datafileNames:
+        fileName = DATA_STREET + fileName
+        audioData, _ = librosa.load(fileName)
+        zcr = librosa.feature.zero_crossing_rate(y=audioData)
+        print(fileName, ": ",zcr)
+
+def extractMelSpectrogram(datafileNames):
+    for fileName in datafileNames:
+        fileName = DATA_STREET + fileName
+        audioData, sampleRate = librosa.load(fileName)
+        melSpectrogram = librosa.feature.melspectrogram(y=audioData, sr=sampleRate)
+        print(fileName, ": ",melSpectrogram)
+
+def extractChromaCene(datafileNames):
+    for fileName in datafileNames:
+        fileName = DATA_STREET + fileName
+        audioData, sampleRate = librosa.load(fileName)
+        chromaCene = librosa.feature.chroma_cens(y=audioData, sr=sampleRate)
+        print(fileName, ": ",chromaCene)
+
+def extractChromaCqt(datafileNames):
+    for fileName in datafileNames:
+        fileName = DATA_STREET + fileName
+        audioData, sampleRate = librosa.load(fileName)
+        chromaCqt = librosa.feature.chroma_cqt(y=audioData, sr=sampleRate)
+        print(fileName, ": ",chromaCqt)
+
+def extractChromaStft(datafileNames):
+    for fileName in datafileNames:
+        fileName = DATA_STREET + fileName
+        audioData, sampleRate = librosa.load(fileName)
+        chromaStft = librosa.feature.chroma_stft(y=audioData, sr=sampleRate)
+        print(fileName, ": ",chromaStft)
+
+def extractChromaVqt(datafileNames):
+    for fileName in datafileNames:
+        fileName = DATA_STREET + fileName
+        audioData, sampleRate = librosa.load(fileName)
+        chromaVqt = librosa.feature.chroma_vqt(y=audioData, sr=sampleRate, intervals="")
+        print(fileName, ": ",chromaVqt)
+
+def clusterAudioFiles(dataFileNames):
+    fileNumberGroupDictionary = {}
+    for i in range(10):
+        label = str(i)
+        fileNumberGroupDictionary[label] = []
+        for file in dataFileNames:
+            if file.startswith(label + "_"):
+                fileNumberGroupDictionary[label].append(os.path.join(file))
+    return fileNumberGroupDictionary
+
+
 print(len(DataFileNames))
+standardizeVolumes(DataFileNames)
 eliminationList = noiseFilterKon(DataFileNames)
 DataFileNames = eliminateFiles(eliminationList, DataFileNames)
 print(len(DataFileNames))
-
-standardizeVolumes(DataFileNames)
+fileNumberGroupDictionary = {}
+fileNumberGroupDictionary = clusterAudioFiles(DataFileNames)
+#extractMFCCs(DataFileNames)
+#extractZeroCrossingRates(DataFileNames)
+#extractMelSpectrogram(DataFileNames)
+#extractChromaCene(DataFileNames)
+#extractChromaCqt(DataFileNames)
+#extractChromaStft(DataFileNames)
